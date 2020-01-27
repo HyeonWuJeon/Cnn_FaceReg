@@ -17,15 +17,13 @@ from sklearn import metrics
 np.random.seed(1)
 from sklearn.model_selection import KFold, cross_val_score, train_test_split,StratifiedKFold
 from sklearn import linear_model
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.preprocessing import RobustScaler
+# from sklearn.kernel_ridge import KernelRidge
+# from sklearn.preprocessing import RobustScalerdddd
 from sklearn.base import BaseEstimator, TransformerMixin, RegressorMixin, clone
-from keras.preprocessing.image import ImageDataGenerator
-
 from sklearn.ensemble import RandomForestClassifier,  GradientBoostingRegressor
 import xgboost as xgb
 import lightgbm as lgb
-from keras.preprocessing.image import ImageDataGenerator
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestRegressor,  GradientBoostingRegressor,VotingClassifier, AdaBoostClassifier, BaggingClassifier
 
