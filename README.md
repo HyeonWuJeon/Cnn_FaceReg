@@ -1,12 +1,7 @@
 # PyOpencv_FaceRecognition
 
 ## Visualization 
-epcoh25 vs epoch2
-
-<div>
 ![GG](https://user-images.githubusercontent.com/45196240/76699586-39704800-66f2-11ea-9ad6-0c1544adb1d3.JPG)
-</div>
-
 <br>
 
 ### Technology
