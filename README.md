@@ -10,6 +10,7 @@
 - Test 30
 - Total Params : 308,301
 - Epoch 2 ~ 25
+Please refer to the presentation.
 ```
 ### Technology
 > * Kfold<br>
