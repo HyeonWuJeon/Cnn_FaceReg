@@ -10,6 +10,9 @@
 > * CNN<br>
 > * One-hot<br>
 
+## Optimizier
+Adam & He Init
+
 <br>
 
 ### ENVIRONMENT
