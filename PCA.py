@@ -42,14 +42,11 @@ import matplotlib.image as mpimg
 import cv2
 import scipy #데이터분석, 수치미분 계산
 from numpy import expand_dims
+# from xgboost import XGBClassifier #윈도우에서 xgb오류,,
 
 
-#1번 64 사이즈로해보기  x 사이즈문제는 아니다.
-#2번 트레이닝 세트에서 테스트셋 잘라서쓰기
-#3번 증강안쓰기 이새키다... + feature가 많아 정확도가 줄어든다 사진크기 64로 바꾸기
-#원인을 알았으니 이제... test 와 train을 합쳐서 60장을 만든다음에 나머지 test를뺀다
 
-class_names = ["hyeon", "irene","joy","selgi","wendy"]
+class_names = ["irene","joy","selgi","wendy"]
 import warnings
 warnings.filterwarnings('ignore')
 print("Warnings ignored!!")
@@ -59,48 +56,66 @@ def labeling():
     files = glob.glob(path.join(image_path, '*.jpg'))
     img = []
 
-    for i in range(60):
-        img.append(files[i][63:])
+    for i in range(20):
+        img.append(files[i][61:])
         img[i] = img[i].replace(".jpg","")
         img[i] = int(img[i])
-
-
+    for i in range(20,40):
+        img.append(files[i][59:])
+        img[i] = img[i].replace(".jpg","")
+        img[i] = int(img[i])
+    for i in range(40,60):
+        img.append(files[i][61:])
+        img[i] = img[i].replace(".jpg","")
+        img[i] = int(img[i])
+    for i in range(60,80):
+        img.append(files[i][61:])
+        img[i] = img[i].replace(".jpg","")
+        img[i] = int(img[i])
+# #
+# #
     img.sort()
-    for i in range(60):
-        img[i] = "H:/workspace/cplusplus_opencv/Casecadenet/dataset/PCA64\\"+"setting"+str(img[i]) +".jpg"
+    for i in range(20):
+        img[i] = "H:/workspace/cplusplus_opencv/Casecadenet/dataset/PCA64\\"+"irene"+str(i) +".jpg"
+    for i in range(20,40):
+        img[i] = "H:/workspace/cplusplus_opencv/Casecadenet/dataset/PCA64\\"+"joy"+str(i-20) +".jpg"
+    for i in range(40,60):
+        img[i] = "H:/workspace/cplusplus_opencv/Casecadenet/dataset/PCA64\\"+"selgi"+str(i-40) +".jpg"
+    for i in range(60,80):
+        img[i] = "H:/workspace/cplusplus_opencv/Casecadenet/dataset/PCA64\\"+"wendy"+str(i-60) +".jpg"
 
-#
     images = [imageio.imread(path) for path in img]
-
-
     X_train = np.array(images)
 
 
     Y_train_orig = []
-    for _ in range(12):
+    for _ in range(20):
         Y_train_orig.append(0)
-    for _ in range(12):
+    for _ in range(20):
         Y_train_orig.append(1)
-    for _ in range(12):
+    for _ in range(20):
         Y_train_orig.append(2)
-    for _ in range(12):
+    for _ in range(20):
         Y_train_orig.append(3)
-    for _ in range(12):
-        Y_train_orig.append(4)
-    Y_train_orig = np.array(Y_train_orig).reshape(1, 60)
+    # for _ in range(12):
+    #     Y_train_orig.append(4)
+    Y_train_orig = np.array(Y_train_orig).reshape(1, 80)
     np.expand_dims(Y_train_orig, axis = 0) #원핫 인코딩시만
 
-    Y_train = convert_to_one_hot(Y_train_orig,5).T
+    Y_train = convert_to_one_hot(Y_train_orig,4).T
+
+    #Y_train : onehot, Y_train_orig : onehot x
     dict = {"X_train" : X_train, "Y_train" : Y_train, "Y_train_orig" : Y_train_orig};
+
     print(Y_train.shape)
+    print("There are {} images in the dataset".format(len(X_train)))
+    print("There are {} unique targets in the dataset".format(len(np.unique(Y_train)))) #중복성분 제외 40명 one hot x
+    print("Size of each image is {}x{}".format(X_train.shape[1],X_train.shape[2]))
+    print("Pixel values were scaled to [0,1] interval no yet... e.g:{}".format(X_train[1][0,:4]))
 
     return dict
 
 
-    # print("There are {} images in the dataset".format(len(a["X_train"])))
-    # print("There are {} unique targets in the dataset".format(len(np.unique(a["Y_train"])))) #중복성분 제외 40명 one hot x
-    # print("Size of each image is {}x{}".format(a["X_train"].shape[1],a["X_train"].shape[2]))
-    # print("Pixel values were scaled to [0,1] interval. e.g:{}".format(a["X_train"][1][0,:4])) #인터벌해주기
 
 
 
@@ -108,46 +123,47 @@ def labeling():
 
 
 
-def argument():
-    k = labeling()    #
-    X_train = k["X_train"]
-    # X_test = k["X_test"]
 
-
-
-    print ("증가전, number of training examples = " + str(X_train.shape[0]))
-    # print ("증가전, number of test examples = " + str(X_test.shape[0]))
-    trains_x =[]
-    for i in range(30):
-        samples = expand_dims(X_train[i],0) #차원 늘려준다
-        datagen = ImageDataGenerator(
-                        rotation_range = 10,
-                        rescale = 1./255,
-                        horizontal_flip=True,
-                        # zoom_range =[0.7,1.0], #1.0값 기준
-                        featurewise_std_normalization=True#데이터의 집합 std별로 데이터를나눔.
-                                )
-        #zca, pca란?
-
-        it = datagen.flow(samples, batch_size=10) #실시간데이터 증강을 통해 모델에 fit시킨다.
-        for i in range(3): #인당 3장씩,
-            batch = it.next()
-            # plt.subplot(330+1+i)
-            trains_x.append(batch)
-            # image = batch[0]#batch , convert to unsigned integers for viewing
-            # plt.imshow(image)
-    X_train = np.array(trains_x)
-    X_train = X_train.reshape(90,64,64,3)
-    print("X_train.shape : ", X_train.shape)
-
-
-    #한번 더 증가 시키기.
-    print(" 증가후 : number of argumentation data : ", X_train.shape)
-
-
-    return X_train
-
-
+# def argument():
+#     k = labeling()    #
+#     X_train = k["X_train"]
+#     # X_test = k["X_test"]
+#
+#
+#
+#     print ("증가전, number of training examples = " + str(X_train.shape[0]))
+#     # print ("증가전, number of test examples = " + str(X_test.shape[0]))
+#     trains_x =[]
+#     for i in range(30):
+#         samples = expand_dims(X_train[i],0) #차원 늘려준다
+#         datagen = ImageDataGenerator(
+#                         rotation_range = 10,
+#                         rescale = 1./255,
+#                         horizontal_flip=True,
+#                         # zoom_range =[0.7,1.0], #1.0값 기준
+#                         featurewise_std_normalization=True#데이터의 집합 std별로 데이터를나눔.
+#                                 )
+#         #zca, pca란?
+#
+#         it = datagen.flow(samples, batch_size=10) #실시간데이터 증강을 통해 모델에 fit시킨다.
+#         for i in range(3): #인당 3장씩,
+#             batch = it.next()
+#             # plt.subplot(330+1+i)
+#             trains_x.append(batch)
+#             # image = batch[0]#batch , convert to unsigned integers for viewing
+#             # plt.imshow(image)
+#     X_train = np.array(trains_x)
+#     X_train = X_train.reshape(90,64,64,3)
+#     print("X_train.shape : ", X_train.shape)
+#
+#
+#     #한번 더 증가 시키기.
+#     print(" 증가후 : number of argumentation data : ", X_train.shape)
+#
+#
+#     return X_train
+#
+#
 
 
 
@@ -163,7 +179,7 @@ def black():
     # Y_test = X["Y_test"]
 
     X = []
-    for i in range(60):
+    for i in range(80):
         X.append(cv2.cvtColor(X_train[i], cv2.COLOR_BGR2GRAY))
     X_train = np.asarray(X)
     plt.figure(figsize=(10,20))
@@ -183,6 +199,13 @@ def black():
     # print("흑백 변경 후: X_train shape:",X_train.shape)
     X_train = X_train/255
 
+    print("Pixel values were scaled to [0,1] interval ! e.g:{}".format(X_train[0,:4]))
+
+    fig, ax = plt.subplots()
+    ax.scatter(x = X_train[0], y =  X_train[0])
+    plt.ylabel('SalePrice', fontsize=13)
+    plt.xlabel('GrLivArea', fontsize=13)
+    plt.show()
     return X_train
 
 
@@ -201,14 +224,17 @@ def main():
     pca=PCA(n_components=2)
     pca.fit(X_train)
     X_pca=pca.transform(X_train)
-    number_of_people=5
-    index_range=number_of_people*5
+    print("pca.explained_variance_ratio_:" , pca.explained_variance_ratio_)
+    print("singular value :", pca.singular_values_)
+    print("singular vector:\n",pca.components_.T)
+    number_of_people=4
+    index_range=number_of_people*4
     fig=plt.figure(figsize=(10,8))
     ax=fig.add_subplot(1,1,1)
     scatter=ax.scatter(X_pca[:index_range,0], #data 위치
             X_pca[:index_range,1], #data 위치
             c=Y_train_orig[0][:index_range], #색상, 순서 또는 색상 순서 (선택 사항) 마커 색상입니다. 가능한 값 : 단일 색상 형식 문자열 길이 n의 일련의 색상 사양. cmap 및 norm을 사용하여 색상에 매핑되는 n 개의 시퀀스입니다. 행이 RGB 또는 RGBA 인 2 차원 배열입니다.
-            s=5, #scalar, 어레이
+            s=4, #scalar, 어레이
            cmap=plt.get_cmap('jet', number_of_people)
            )
 
@@ -232,9 +258,12 @@ def main():
     plt.show()
 
 
-    n_components=25
+    n_components=52 #2차원
     pca=PCA(n_components=n_components, whiten=True)
     pca.fit(X_train)
+    # cumsum = np.cumsum(pca.explained_variance_ratio_)
+    # d = np.argmax(cumsum >= 0.95)+1
+    # print("shape:", d) # 52
 
     fig,ax=plt.subplots(1,1,figsize=(8,8))
     ax.imshow(pca.mean_.reshape((64,64)), cmap="gray")
@@ -243,21 +272,22 @@ def main():
     ax.set_title('Average Face')
     plt.show()
 
+
     number_of_eigenfaces=len(pca.components_)
     print(number_of_eigenfaces)
     eigen_faces=pca.components_.reshape((number_of_eigenfaces, 64, 64))
 
-    cols=5
-    rows=int(number_of_eigenfaces/cols)
-    fig, axarr=plt.subplots(nrows=rows, ncols=cols, figsize=(15,15))
-    axarr=axarr.flatten()
-    for i in range(number_of_eigenfaces):
-        axarr[i].imshow(eigen_faces[i],cmap="gray")
-        axarr[i].set_xticks([])
-        axarr[i].set_yticks([])
-        axarr[i].set_title("eigen id:{}".format(i))
-    plt.suptitle("All Eigen Faces".format(10*"=", 10*"="))
-    plt.show()
+    # cols=5
+    # rows=int(number_of_eigenfaces/cols)
+    # fig, axarr=plt.subplots(nrows=rows, ncols=cols, figsize=(15,15))
+    # axarr=axarr.flatten()
+    # for i in range(number_of_eigenfaces):
+    #     axarr[i].imshow(eigen_faces[i],cmap="gray")
+    #     axarr[i].set_xticks([])
+    #     axarr[i].set_yticks([])
+    #     axarr[i].set_title("eigen id:{}".format(i))
+    # plt.suptitle("All Eigen Faces".format(10*"=", 10*"="))
+    # plt.show()
 
     X_train, X_test, Y_train, Y_test=train_test_split(X_train, Y_train_orig[0], test_size=0.3, stratify=Y_train, random_state=0)
 
@@ -269,6 +299,8 @@ def main():
 
     y_pred = clf.predict(X_test_pca)
     print("accuracy score:{:.2f}".format(metrics.accuracy_score(Y_test, y_pred)))
+
+    #heat map
     import seaborn as sns
     plt.figure(1, figsize=(12,8))
     sns.heatmap(metrics.confusion_matrix(Y_test, y_pred))
@@ -298,12 +330,13 @@ def main():
         print("Accuracy score:{:0.2f}".format(metrics.accuracy_score(Y_test, y_pred)))
         print()
 
+
     # labeling()
     #
     from sklearn.model_selection import cross_val_score
     from sklearn.model_selection import KFold
 
-    pca=PCA(n_components=40, whiten=True)
+    pca=PCA(n_components=52, whiten=True)
     pca.fit(X_train)
     X_pca=pca.transform(X_train)
 
@@ -311,6 +344,22 @@ def main():
         kfold=KFold(n_splits=5, shuffle=True, random_state=0)
         cv_scores=cross_val_score(model, X_pca, Y_train, cv=kfold)
         print("{} mean cross validations score:{:.2f}".format(name, cv_scores.mean()))
+# xgb_model = XGBClassifier(reg_lambda = 2, objective="reg:linear",booster = "gbtree", eta = 0.1, max_depth = 15, eval_matric = "rmse", seed = random_seed) #L2reg
+
+    # xgb_model = XGBClassifier(reg_lambda = 2, objective="reg:linear", random_state=42, eta = 0.01)
+    # score = cross_val_score(xgb_model, X_pca, Y_train, cv = kfold, n_jobs= 1,scoring = 'accuracy')
+    # result = round(np.mean(score)*100,2)
+    # print("xgboost : ", result)
+
+    from sklearn.model_selection import LeaveOneOut  #폴드 하나에 하나의 테스트샘플만 들어있다.
+    loo_cv=LeaveOneOut()
+    clf=LogisticRegression()
+    cv_scores=cross_val_score(clf,
+                            X_pca,
+                            Y_train,
+                         cv=loo_cv)
+    print("{} Leave One Out cross-validation mean accuracy score:{:.2f}".format(clf.__class__.__name__,
+                                                                            cv_scores.mean()))
 
 
 if __name__ == '__main__':
