@@ -16,13 +16,10 @@
 <br>
 
 ### Technology
-> * Regulization<br>
-> * Harr - filter<br>
-> * normalization<br>
-> * Hog<br>
+> * Kfold<br>
 > * DataArgumentation<br>
 > * CNN<br>
-> * 
+> * One-hot<br>
 
 <br>
 
@@ -36,7 +33,6 @@
 
 ```
 https://scikit-learn.org/0.17/modules/classes.html
-
-
+https://www.tensorflow.org/versions/r1.15/api_docs/python/tf
 ```
 
